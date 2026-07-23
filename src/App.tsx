@@ -6,7 +6,7 @@ function App(){
   return(
     <Routes>
       <Route path="/" element={<TournamentList />} />
-      <Route path="/tournament/:id" element={<TournamentDetails />} />
+      <Route path="/tournament/:tournamentId" element={<TournamentDetails />} />
     </Routes>
   );
 }
