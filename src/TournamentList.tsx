@@ -14,6 +14,7 @@ interface Tournament{
   maxmumNumberOfTeams:number;
   status:string;
   registrationDeadline:string;
+  rules:string;
   tournamentImageUrl:string;
 }
 
@@ -42,7 +43,7 @@ function TournamentList() {
 
 return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold text-blue-600 mb-6">
           Available Tournaments
         </h1>
