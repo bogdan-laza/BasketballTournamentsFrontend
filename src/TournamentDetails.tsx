@@ -14,6 +14,7 @@ interface Tournament{
   maximumNumberOfTeams:number;
   status:string;
   registrationDeadline:string;
+  rules:string;
   tournamentImageUrl:string;
 }
 
@@ -46,12 +47,29 @@ function TournamentDetails(){
     }
 
    return (
-  <div className="p-8 bg-gray-50 min-h-screen">
-    <Link to="/" className="text-blue-600 hover:underline mb-8 block">
-      &larr; Back to dashboard
-    </Link>
+  <div className="p-8 bg-slate-900 min-h-screen">
+    <div className="mb-4 flex justify-between items-center w-full">
+            <h1 className="text-3xl md:text-3xl font-extrabold text-white tracking-tighter drop-shadow-lg">
+                    Hoop<span className="text-orange-500">Zone</span>
+            </h1>
 
-    <div className="max-w-6xl mx-auto bg-white p-8 rounded-2xl shadow-md flex gap-12 items-start">
+            <div className="flex gap-4">
+            <Link
+                to="/signup"
+                className="inline-flex justify-center items-center px-3 py-1 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-lg font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
+                    Sign up
+            </Link>
+
+            <Link
+                to="/login"
+                className="inline-flex justify-center items-center px-3 py-1 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-lg font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
+                    Log in
+            </Link>
+            </div>
+
+        </div>
+
+    <div className="max-w-6xl mx-auto border-slate-700 shadow-lg p-8 rounded-2xl flex gap-12 items-center bg-slate-800">
       
       <div className="shrink-0">
         <img
@@ -64,13 +82,13 @@ function TournamentDetails(){
       <div className="flex flex-col flex-1">
         
         <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900">{tournament.tournamentName}</h1>
+          <h1 className="text-5xl font-bold text-white">{tournament.tournamentName}</h1>
           <span className={`px-4 py-2 rounded-full text-sm mt-4 font-bold uppercase tracking-wider inline-block ${getColorByStatus(tournament.status)}`}>
             {tournament.status}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-lg text-gray-800">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-lg text-white">
           <p><strong>Location:</strong> {tournament.tournamentLocation}</p>
           <p><strong>Date:</strong> {new Date(tournament.tournamentDate).toLocaleDateString('en-gb')}</p>
           <p><strong>Starting time:</strong> {new Date(tournament.tournamentDate).getHours()}:{new Date(tournament.tournamentDate).getMinutes().toString().padStart(2, '0')}</p>
@@ -82,15 +100,22 @@ function TournamentDetails(){
           
           <div className="col-span-2 flex gap-8 mt-4 pt-4 border-t border-gray-100">
             <p><strong>Teams participating:</strong> 
-              <Link to={`/tournament/${tournamentId}/teams`} className="text-blue-600 hover:text-blue-800 hover:underline ml-2">See the teams</Link>
+              <Link to={`/tournament/${tournamentId}/teams`} className="text-orange-400 hover:text-blue-800 hover:underline ml-2">See the teams</Link>
             </p>
             <p><strong>Rules:</strong> 
-              <Link to={`/tournament/${tournamentId}/rules`} className="text-blue-600 hover:text-blue-800 hover:underline ml-2">See the rules</Link>
+              <Link to={`/tournament/${tournamentId}/rules`} className="text-orange-400 hover:text-blue-800 hover:underline ml-2">See the rules</Link>
             </p>
           </div>
         </div>
 
       </div>
+    </div>
+    <div className="mt-8 flex justify-center w-full">
+    <Link
+        to={`/tournament/${tournamentId}/participate`}
+        className="inline-flex justify-center items-center px-10 py-3  bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-2xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
+            Register
+    </Link>
     </div>
   </div>
 );
