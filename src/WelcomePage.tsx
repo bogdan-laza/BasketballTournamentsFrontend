@@ -16,9 +16,24 @@ function WelcomePage(){
                     Play competitive at any level!
                 </p>
 
+                <div className="flex flex-row">
+                    <Link
+                    to="/signup"
+                    className="px-10 py-4 mb-5 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
+                        Sign up
+                    </Link>
+
+                      <Link
+                    to="/login"
+                    className="px-10 py-4 mb-5 ml-3 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
+                        Log in
+                    </Link>
+
+                </div>
+
                 <Link
                     to="/tournaments"
-                    className="px-10 py-4 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-1 transform">
+                    className="px-10 py-4 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
                         View tournaments
                     </Link>
             </div>
@@ -27,3 +42,8 @@ function WelcomePage(){
 }
 
 export default WelcomePage;
+
+// a bar that has sign up option                                                 done
+//change the design for toyrnments to the colors from welcome page
+//a bar taht has sign up on all the other pages too if user not signed in
+//create the sign up page
