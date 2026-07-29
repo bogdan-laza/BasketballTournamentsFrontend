@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { data, Link } from 'react-router-dom';
+import api from "./utils/api";
 
 interface Tournament {
   tournamentId: number;
@@ -26,11 +27,13 @@ function TournamentList() {
   const [totalPages, setTotalPages]=useState(1);
   const [totalCount, setTotalCount]=useState(1);
 
-  useEffect(() => {
+ useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5265/api/Tournament?page=${page}&pageSize=${pageSize}`)
-      .then((response) => response.json())
-      .then((data) => {
+
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}`)
+      .then((response) => {
+        const data = response.data; 
+
         if (data.items && Array.isArray(data.items)) {
           setTournaments(data.items);
           setTotalPages(data.totalPages);
@@ -41,9 +44,13 @@ function TournamentList() {
       })
       .catch((error) => {
         console.error("Error while fetching tournaments: ", error);
-        setError(error.message);
+        
+        const errorMessage = error.response?.data?.detail || error.message;
+        setError(errorMessage);
       })
-      .finally(() => { setLoading(false); });
+      .finally(() => { 
+        setLoading(false); 
+      });
   }, [page, pageSize]);
 
   const handlePreviousPage=()=> {
@@ -86,7 +93,7 @@ function TournamentList() {
         </h1>
 
         {error && (
-          <div className="bg-red-500/20 border border-blue-500 text-red-200 p-4 rounded-lg mb-6">
+          <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}

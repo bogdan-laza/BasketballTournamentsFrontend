@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import api from "./utils/api";
 
 function SignupPage(){
     const navigate=useNavigate();
@@ -16,6 +17,10 @@ function SignupPage(){
 
     const [error, setError]=useState<string | null>(null);
     const [loading, setLoading]=useState(false);
+
+     const navigation=useNavigate();
+     const location=useLocation();
+     const alertMessage=location.state?.alertMessage;
 
     const handleChange=(e: React.ChangeEvent<HTMLInputElement>) => {
         setUser({...user, [e.target.name]:e.target.value});
@@ -37,33 +42,29 @@ function SignupPage(){
                 refreshTokenExpiry:new Date().toISOString(),
             };
 
-            const response=await fetch("http://localhost:5265/api/User", {
-                method: "POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify(finalPayload),
-            });
+            const response=await api.post('/User', finalPayload);
+            navigate("/login");
+       } catch (err: any) {
+            console.error("Sign-up error: ", err);
 
-            if(!response.ok){
-                const errorData=await response.json();
-                console.log("Raw backend error:", errorData);
+            if (err.response && err.response.data) {
+                const errorData = err.response.data;
 
                 if (errorData.detail) {
-                    throw new Error(errorData.detail);
-                }
-
-                if (errorData.errors && typeof errorData.errors === 'object') {
+                    setError(errorData.detail);
+                } 
+                else if (errorData.errors && typeof errorData.errors === 'object') {
                     const firstErrorKey = Object.keys(errorData.errors)[0];
-                    const firstErrorMessage = errorData.errors[firstErrorKey][0];
-                    throw new Error(firstErrorMessage);
+                    setError(errorData.errors[firstErrorKey][0]);
+                } 
+                else {
+                    setError("Sign-up failed! Please try again.");
                 }
-
-                throw new Error(errorData.detail || "Sign-up failed! Please try again!");
+            } 
+            else {
+                setError("Unable to connect to the server.");
             }
-            navigate("/login");
-        } catch(err:any){
-            console.error("Sign-up error: ", err);
-            setError(err.message);
-        } finally{
+        } finally {
             setLoading(false);
         }
     }
@@ -92,6 +93,12 @@ function SignupPage(){
                 </h1>
                 <p className="text-slate-400 mt-2">Create your player profile</p>
             </div>
+
+            {alertMessage &&(
+                <div className="bg-orange-500/20 border border-orange-500 text-orange-200 p-3 rounded-lg mb-6 text-sm text-center font-semibold animate-pulse">
+                    {alertMessage}
+                </div>
+            )}
 
             {error && (
                 <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-6 text-sm text-center">
@@ -155,7 +162,7 @@ function SignupPage(){
                                 Create a password-at least 8 characters(2 digits and one special character)
                             </label>
 
-                            <input required type="text" name="passwordHash" value={user.passwordHash} onChange={handleChange} className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors" placeholder="e.g. abcde12!" />
+                            <input required type="password" name="passwordHash" value={user.passwordHash} onChange={handleChange} className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors" placeholder="e.g. abcde12!" />
                         </div>
 
                         <div className="flex gap-4 mt-6">

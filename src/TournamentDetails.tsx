@@ -1,5 +1,6 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import api from "./utils/api";
 
 
 interface Tournament{
@@ -22,10 +23,12 @@ function TournamentDetails(){
     const { tournamentId }=useParams();
     const [tournament, setTournament] = useState<Tournament | null>(null);
 
+    const navigate=useNavigate();
+
     useEffect(() => {
-        fetch(`http://localhost:5265/api/Tournament/${tournamentId}`)
-        .then((res)=>res.json())
-        .then((data) => setTournament(data));
+        api.get(`/Tournament/${tournamentId}`)
+        .then((res)=>setTournament(res.data))
+       .catch((err) => console.error("Error fetching tournament:", err));
     }, [tournamentId])
 
     if(!tournament)
@@ -44,7 +47,20 @@ function TournamentDetails(){
             default:
                 return 'bg-gray-500 text-white';
         }
-    }
+    };
+
+    const handleRegisterClick=()=>{
+        const isLoggedIn=localStorage.getItem("token")!==null;
+
+        if(!isLoggedIn){
+            navigate("/signup", {
+                state:{alertMessage:"You need to sign up before joining a tournament!"}
+            });
+        }
+        else{
+            navigate(`/tournament/${tournamentId}/register`);
+        }
+    };
 
    return (
   <div className="p-8 bg-slate-900 min-h-screen">
@@ -111,11 +127,11 @@ function TournamentDetails(){
       </div>
     </div>
     <div className="mt-8 flex justify-center w-full">
-    <Link
-        to={`/tournament/${tournamentId}/participate`}
+    <button
+        onClick={handleRegisterClick}
         className="inline-flex justify-center items-center px-10 py-3  bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-2xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
             Register
-    </Link>
+    </button>
     </div>
   </div>
 );
