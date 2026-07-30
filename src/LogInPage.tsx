@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "./utils/api";
+import { useAuth } from "./AuthContext";
 
 function LogInPage(){
     const navigate=useNavigate();
@@ -13,7 +14,7 @@ function LogInPage(){
     const [error, setError]=useState<string | null>(null);
     const [loading, setLoading]=useState(false);
 
-     const navigation=useNavigate();
+     const {login}=useAuth();
 
     const handleChange=(e: React.ChangeEvent<HTMLInputElement>) => {
         setUser({...user, [e.target.name]:e.target.value});
@@ -33,8 +34,7 @@ function LogInPage(){
             const response=await api.post('/Auth/login', finalPayload);
 
             const data=await response.data;
-            localStorage.setItem("token", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
+            login(data.accessToken, data.refreshToken);
 
             navigate("/tournaments");
         } catch(err:any){
