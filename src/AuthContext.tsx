@@ -6,7 +6,7 @@ interface AuthContextType{
     logout: ()=>void;
 }
 
-const authContext=createContext<AuthContextType | undefined>(undefined);
+const AuthContext=createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider=({ children }: { children:React.ReactNode})=>{
     const [isAuthenticated, setIsAuthenticated]=useState(false);
@@ -31,14 +31,14 @@ export const AuthProvider=({ children }: { children:React.ReactNode})=>{
     }
 
     return(
-        <authContext.Provider value={{isAuthenticated, login, logout}}>
+        <AuthContext.Provider value={{isAuthenticated, login, logout}}>
             {children}
-        </authContext.Provider>
+        </AuthContext.Provider>
     );
 };
 
 export const useAuth=()=>{
-    const context=useContext(authContext);
+    const context=useContext(AuthContext);
     if(!context){
         throw new Error("useAuth must be used within an AuthProvider");
     }

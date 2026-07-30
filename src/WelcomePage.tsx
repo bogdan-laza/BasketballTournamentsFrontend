@@ -43,7 +43,5 @@ function WelcomePage(){
 
 export default WelcomePage;
 
-// a bar that has sign up option                                                 done
-//change the design for toyrnments to the colors from welcome page
-//a bar taht has sign up on all the other pages too if user not signed in
-//create the sign up page
+//verify email
+//make the psge for loggedin users

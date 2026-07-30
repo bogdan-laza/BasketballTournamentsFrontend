@@ -64,28 +64,6 @@ function TournamentList() {
 
   return (
     <div className="min-h-screen bg-slate-900 p-8">
-
-        <div className="mb-10 flex justify-between items-center w-full">
-            <h1 className="text-3xl md:text-3xl font-extrabold text-white tracking-tighter drop-shadow-lg">
-                    Hoop<span className="text-orange-500">Zone</span>
-            </h1>
-
-            <div className="flex gap-4">
-            <Link
-                to="/signup"
-                className="inline-flex justify-center items-center px-3 py-1 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-lg font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
-                    Sign up
-            </Link>
-
-            <Link
-                to="/login"
-                className="inline-flex justify-center items-center px-3 py-1 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-lg font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
-                    Log in
-            </Link>
-            </div>
-
-        </div>
-
       <div className="max-w-6xl mx-auto mt-4">
         
         <h1 className="text-5xl font-extrabold text-white mb-10 tracking-tight">
