@@ -41,6 +41,11 @@ function LogInPage(){
             console.error("Login error: ", err);
             if (err.response && err.response.data) {
                 const errorData = err.response.data;
+                if(errorData.message==="EmailNotVerified"){
+                    const userEmail=err.response.data.email;
+                    navigate("/verify-email", {state:{email:userEmail}});
+                    return;
+                }
 
                 if (err.response.status === 401) {
                     setError("Invalid username or password.");
@@ -69,9 +74,6 @@ function LogInPage(){
 
     return(
         <div className="min-h-screen bg-slate-900 flex flex-col p-8">
-
-       
-
                 <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
             <div className="text-center mb-8">

@@ -43,7 +43,7 @@ function SignupPage(){
             };
 
             const response=await api.post('/User', finalPayload);
-            navigate("/login");
+            navigate("/verify-email", {state:{email:user.email}});
        } catch (err: any) {
             console.error("Sign-up error: ", err);
 
