@@ -7,6 +7,7 @@ interface Tournament{
   tournamentId:number;
   tournamentName:string;
   tournamentDate:string;
+  daysDuration:number;
   tournamentLocation:string;
   entryFee:number;
   prize:number;
@@ -49,6 +50,12 @@ function TournamentDetails(){
         }
     };
 
+    const getEndDate=(startDateString: string, duration:number)=>{
+        const date=new Date(startDateString);
+        date.setDate(date.getDate()+duration);
+        return date.toLocaleDateString('en-gb');
+    }
+
     const handleRegisterClick=()=>{
         const isLoggedIn=localStorage.getItem("token")!==null;
 
@@ -86,10 +93,11 @@ function TournamentDetails(){
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-lg text-white">
           <p><strong>Location:</strong> {tournament.tournamentLocation}</p>
-          <p><strong>Date:</strong> {new Date(tournament.tournamentDate).toLocaleDateString('en-gb')}</p>
-          <p><strong>Starting time:</strong> {new Date(tournament.tournamentDate).getHours()}:{new Date(tournament.tournamentDate).getMinutes().toString().padStart(2, '0')}</p>
+          <p><strong>Start date:</strong> {new Date(tournament.tournamentDate).toLocaleDateString('en-gb')}</p>
           <p><strong>Format:</strong> {tournament.tournamentFormat}</p>
+          <p><strong>End date:</strong> {getEndDate(tournament.tournamentDate, tournament.daysDuration)}</p>
           <p><strong>Entry fee:</strong> {tournament.entryFee}</p>
+          <p><strong>Starting time:</strong> {new Date(tournament.tournamentDate).getHours()}:{new Date(tournament.tournamentDate).getMinutes().toString().padStart(2, '0')}</p>
           <p><strong>Winner prize:</strong> {tournament.prize}</p>
           <p><strong>Max teams:</strong> {tournament.maximumNumberOfTeams}</p>
           <p><strong>Registration deadline:</strong> {new Date(tournament.registrationDeadline).toLocaleDateString('en-gb')}, {new Date(tournament.registrationDeadline).getHours()}:{new Date(tournament.registrationDeadline).getMinutes().toString().padStart(2, '0')}</p>

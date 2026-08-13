@@ -67,7 +67,7 @@ function TournamentList() {
       <div className="max-w-6xl mx-auto mt-4">
         
         <h1 className="text-5xl font-extrabold text-white mb-10 tracking-tight">
-          {totalCount} Available <span className="text-orange-500">Tournaments</span>
+          {totalCount} Available <span className="text-orange-500">{totalCount>1 ? "Tournaments" : "Tournament"}</span>
         </h1>
 
         {error && (

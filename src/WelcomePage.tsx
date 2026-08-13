@@ -16,26 +16,7 @@ function WelcomePage(){
                     Play competitive at any level!
                 </p>
 
-                <div className="flex flex-row">
-                    <Link
-                    to="/signup"
-                    className="px-10 py-4 mb-5 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
-                        Sign up
-                    </Link>
-
-                      <Link
-                    to="/login"
-                    className="px-10 py-4 mb-5 ml-3 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
-                        Log in
-                    </Link>
-
-                </div>
-
-                <Link
-                    to="/tournaments"
-                    className="px-10 py-4 bg-orange-500 hover:bg-orange-600 transition-colors duration-300 text-white text-xl font-bold rounded-full shadow-xl hover:shadow-orange-300/30 hover:translate-y-0.5 transform">
-                        View tournaments
-                    </Link>
+                
             </div>
         </div>
     );
@@ -44,4 +25,3 @@ function WelcomePage(){
 export default WelcomePage;
 
 //verify email
-//make the psge for loggedin users
