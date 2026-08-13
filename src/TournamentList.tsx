@@ -26,11 +26,13 @@ function TournamentList() {
   const [pageSize]=useState(6);
   const [totalPages, setTotalPages]=useState(1);
   const [totalCount, setTotalCount]=useState(1);
+  const [searchName, setSearchName]=useState("");
+  const [submittedSearchName, setSubmittedSearchName]=useState("");
 
  useEffect(() => {
     setLoading(true);
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}`)
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}`)
       .then((response) => {
         const data = response.data; 
 
@@ -51,7 +53,7 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize]);
+  }, [page, pageSize, submittedSearchName]);
 
   const handlePreviousPage=()=> {
     setPage((prev)=>Math.max(1, prev-1));
@@ -65,6 +67,44 @@ function TournamentList() {
   return (
     <div className="min-h-screen bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto mt-4">
+
+        <div className="mb-5 mt-5 w-full max-w-6xl mx-auto">
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="relative flex-1 min-w-55">
+                    <input 
+                    type="text"
+                    placeholder="Tournament name"
+                    value={searchName}
+                    onChange={(e)=>setSearchName(e.target.value)}
+                    className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-md border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
+                    /> 
+
+                    {searchName && (
+                        <button 
+                        onClick={()=>{
+                            setSearchName("");
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
+                        title="Clear search"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+
+                </div>
+                <button
+                onClick={()=>{
+                    setSubmittedSearchName(searchName);
+                    setPage(1);
+                }}
+                className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-md transition-colors duration-300 shadow-sm"
+                >
+                    Search
+                </button>
+            </div>
+        </div>
         
         <h1 className="text-5xl font-extrabold text-white mb-10 tracking-tight">
           {totalCount} Available <span className="text-orange-500">{totalCount>1 ? "Tournaments" : "Tournament"}</span>
@@ -112,7 +152,7 @@ function TournamentList() {
 
                   <Link 
                     to={`/tournament/${tournament.tournamentId}`}
-                    className="self-start bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-full shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5 transform transition-all duration-300"
+                    className="self-start bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-full hover:-translate-y-0.5 transform transition-all duration-300"
                   >
                     View Details
                   </Link>
