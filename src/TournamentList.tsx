@@ -27,12 +27,14 @@ function TournamentList() {
   const [totalPages, setTotalPages]=useState(1);
   const [totalCount, setTotalCount]=useState(1);
   const [searchName, setSearchName]=useState("");
+  const [searchLocation, setSearchLocation]=useState("")
+  const [submittedSearchLocation, setSubmittedSearchLocation]=useState("");
   const [submittedSearchName, setSubmittedSearchName]=useState("");
 
  useEffect(() => {
     setLoading(true);
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}`)
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}`)
       .then((response) => {
         const data = response.data; 
 
@@ -53,7 +55,7 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize, submittedSearchName]);
+  }, [page, pageSize, submittedSearchName, submittedSearchLocation]);
 
   const handlePreviousPage=()=> {
     setPage((prev)=>Math.max(1, prev-1));
@@ -83,6 +85,8 @@ function TournamentList() {
                         <button 
                         onClick={()=>{
                             setSearchName("");
+                            setSubmittedSearchName("");
+                            setPage(1);
                         }}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
                         title="Clear search"
@@ -92,11 +96,38 @@ function TournamentList() {
                             </svg>
                         </button>
                     )}
-
                 </div>
+
+                    <div className="relative flex-1 min-w-55">
+                        <input 
+                        type="text"
+                        placeholder="Tournament location"
+                        value={searchLocation}
+                        onChange={(e)=>setSearchLocation(e.target.value)}
+                        className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-md border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
+                        /> 
+
+                        {searchLocation && (
+                            <button 
+                            onClick={()=>{
+                                setSearchLocation("");
+                                setSubmittedSearchLocation("");
+                                setPage(1);
+                            }}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
+                            title="Clear search"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+
                 <button
                 onClick={()=>{
                     setSubmittedSearchName(searchName);
+                    setSubmittedSearchLocation(searchLocation);
                     setPage(1);
                 }}
                 className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-md transition-colors duration-300 shadow-sm"
