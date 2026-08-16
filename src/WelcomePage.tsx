@@ -1,6 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 function WelcomePage(){
+    const isLoggedIn=!!localStorage.getItem("token");
+
+    if(isLoggedIn){
+        return <Navigate to="/tournaments" replace />;
+    }
     return (
         <div className="relative h-screen w-full bg-cover bg-center"
         style={{backgroundImage:"url('https://sportarena.ro/wp/wp-content/uploads/2021/05/WhatsApp-Image-2021-05-04-at-11.59.30-AM-1.jpeg')"}}
@@ -23,5 +28,3 @@ function WelcomePage(){
 }
 
 export default WelcomePage;
-
-//verify email

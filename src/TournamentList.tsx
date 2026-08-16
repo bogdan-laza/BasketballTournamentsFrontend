@@ -39,13 +39,16 @@ function TournamentList() {
   const [searchFormat, setSearchFormat]=useState(searchParams.get("format") || "");
   const [submittedSearchFormat, setSubmittedSearchFormat]=useState(searchParams.get("format") || "");
 
-  const [searchStatus, setSearchStatus]=useState(searchParams.get("status") || "");
-  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(searchParams.get("status") || "");
+  const [searchStatus, setSearchStatus]=useState(searchParams.get("status") || "Upcoming");
+  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(searchParams.get("status") || "Upcoming");
+
+  const [sortBy, setSortBy]=useState(searchParams.get("sortBy") || "TournamentDate");
+  const [sortOrder, setSortOrder]=useState(searchParams.get("sortOrder") || "asc");
 
  useEffect(() => {
     setLoading(true);
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}`)
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}&sortBy=${sortBy}&sortOrder=${sortOrder}`)
       .then((response) => {
         const data = response.data; 
 
@@ -66,7 +69,7 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus]);
+  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, sortBy, sortOrder]);
 
   useEffect(()=>{
     const params=new URLSearchParams();
@@ -84,9 +87,11 @@ function TournamentList() {
         params.set("status", submittedSearchStatus);
 
     params.set("page", page.toString());
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
 
     setSearchParams(params);
-  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus])
+  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, page, sortBy, sortOrder])
 
   const handlePreviousPage=()=> {
     setPage((prev)=>Math.max(1, prev-1));
@@ -95,6 +100,17 @@ function TournamentList() {
   const handleNextPage=()=>{
     setPage((cur)=>cur+1)
   }
+
+  const groupedTournaments=tournaments.reduce((groups, tournament)=>{
+    const date=new Date(tournament.tournamentDate);
+    const monthYear=date.toLocaleString('en-US', {month: 'long', year: 'numeric'});
+
+    if(!groups[monthYear])
+        groups[monthYear]=[];
+
+    groups[monthYear].push(tournament);
+    return groups;
+  }, {} as Record<string, Tournament[]>);
   
 
   return (
@@ -226,45 +242,55 @@ function TournamentList() {
 
             <>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {tournaments.map((tournament) => (
-              
-              <div 
-                key={tournament.tournamentId} 
-                className="p-5 border border-slate-700 rounded-2xl shadow-lg flex items-center gap-6 bg-slate-800 hover:border-orange-500 transition-colors duration-300 group"
-              >
-                <div className="shrink-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1542652694-40abf526446e?q=80&w=500&auto=format&fit=crop"
-                    alt={tournament.tournamentName}
-                    className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300"
-                  />
+            {Object.entries(groupedTournaments).map(([monthYear, monthTournaments])=>(
+                <div key={monthYear} className="mb-14">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-1.5 h-10 bg-orange-500 rounded-full"></div>
+
+                        <h2 className="text-3xl font-semibold text-white tracking-wide">
+                            {monthYear}
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {monthTournaments.map((tournament)=>(
+                            <div key={tournament.tournamentId} 
+                                className="p-5 border border-slate-700 rounded-2xl shadow-lg flex items-center gap-6 bg-slate-800 hover:border-orange-500 transition-colors duration-300 group"
+                            >
+                    <div className="shrink-0">
+                        <img
+                            src="https://images.unsplash.com/photo-1542652694-40abf526446e?q=80&w=500&auto=format&fit=crop"
+                            alt={tournament.tournamentName}
+                            className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300"
+                        />
+                    </div>
+
+                    <div className="flex flex-col flex-1">
+                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                            {tournament.tournamentName}
+                        </h2>
+
+                        <h3 className="text-lg text-slate-300 font-medium">
+                            {tournament.tournamentLocation}
+                        </h3>
+
+                        <h3 className="text-slate-400 mb-5">
+                            {new Date(tournament.tournamentDate).toLocaleDateString('en-gb')}
+                        </h3>
+
+                        <Link 
+                            to={`/tournament/${tournament.tournamentId}`}
+                            className="self-start bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-full hover:-translate-y-0.5 transform transition-all duration-300"
+                        >
+                            View Details
+                        </Link>
+                    </div>
                 </div>
-
-                <div className="flex flex-col flex-1">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
-                    {tournament.tournamentName}
-                  </h2>
-
-                  <h3 className="text-lg text-slate-300 font-medium">
-                    {tournament.tournamentLocation}
-                  </h3>
-
-                  <h3 className="text-slate-400 mb-5">
-                    {new Date(tournament.tournamentDate).toLocaleDateString('en-gb')}
-                  </h3>
-
-                  <Link 
-                    to={`/tournament/${tournament.tournamentId}`}
-                    className="self-start bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-full hover:-translate-y-0.5 transform transition-all duration-300"
-                  >
-                    View Details
-                  </Link>
+                        ))}
+                    </div>
                 </div>
-              </div>
-
             ))}
-          </div>
+
           <div className="mt-12 flex items-center justify-center gap-6">
             <button
             onClick={handlePreviousPage}
