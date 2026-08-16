@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { data, Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from "./utils/api";
 
 interface Tournament {
@@ -22,19 +22,30 @@ function TournamentList() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage]=useState(1);
+
+  const [searchParams, setSearchParams]=useSearchParams();
+
+  const [page, setPage]=useState(parseInt(searchParams.get("page") || "1"));
   const [pageSize]=useState(6);
   const [totalPages, setTotalPages]=useState(1);
   const [totalCount, setTotalCount]=useState(1);
-  const [searchName, setSearchName]=useState("");
-  const [searchLocation, setSearchLocation]=useState("")
-  const [submittedSearchLocation, setSubmittedSearchLocation]=useState("");
-  const [submittedSearchName, setSubmittedSearchName]=useState("");
+
+  const [searchName, setSearchName]=useState(searchParams.get("name") || "");
+  const [submittedSearchName, setSubmittedSearchName]=useState(searchParams.get("name") || "");
+
+  const [searchLocation, setSearchLocation]=useState(searchParams.get("location") || "");
+  const [submittedSearchLocation, setSubmittedSearchLocation]=useState(searchParams.get("location") || "");
+
+  const [searchFormat, setSearchFormat]=useState(searchParams.get("format") || "");
+  const [submittedSearchFormat, setSubmittedSearchFormat]=useState(searchParams.get("format") || "");
+
+  const [searchStatus, setSearchStatus]=useState(searchParams.get("status") || "");
+  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(searchParams.get("status") || "");
 
  useEffect(() => {
     setLoading(true);
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}`)
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}`)
       .then((response) => {
         const data = response.data; 
 
@@ -55,7 +66,27 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize, submittedSearchName, submittedSearchLocation]);
+  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus]);
+
+  useEffect(()=>{
+    const params=new URLSearchParams();
+
+    if(submittedSearchName)
+        params.set("name", submittedSearchName);
+
+    if(submittedSearchLocation)
+        params.set("location", submittedSearchLocation);
+
+    if(submittedSearchFormat)
+        params.set("format", submittedSearchFormat);
+
+    if(submittedSearchStatus)
+        params.set("status", submittedSearchStatus);
+
+    params.set("page", page.toString());
+
+    setSearchParams(params);
+  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus])
 
   const handlePreviousPage=()=> {
     setPage((prev)=>Math.max(1, prev-1));
@@ -71,14 +102,14 @@ function TournamentList() {
       <div className="max-w-6xl mx-auto mt-4">
 
         <div className="mb-5 mt-5 w-full max-w-6xl mx-auto">
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-55">
                     <input 
                     type="text"
-                    placeholder="Tournament name"
+                    placeholder="Name"
                     value={searchName}
                     onChange={(e)=>setSearchName(e.target.value)}
-                    className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-md border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
+                    className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
                     /> 
 
                     {searchName && (
@@ -101,10 +132,10 @@ function TournamentList() {
                     <div className="relative flex-1 min-w-55">
                         <input 
                         type="text"
-                        placeholder="Tournament location"
+                        placeholder="Location"
                         value={searchLocation}
                         onChange={(e)=>setSearchLocation(e.target.value)}
-                        className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-md border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
+                        className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
                         /> 
 
                         {searchLocation && (
@@ -124,13 +155,55 @@ function TournamentList() {
                         )}
                     </div>
 
+                    <div className="relative flex-1 min-w-55">
+                        <select
+                        value={searchFormat}
+                        onChange={(e)=>setSearchFormat(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
+                        >
+                            <option value="">All formats</option>
+                            <option value="1v1">1v1</option>
+                            <option value="2v2">2v2</option>
+                            <option value="3v3">3v3</option>
+                            <option value="5v5">5v5</option>
+                        </select>
+
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+
+                     <div className="relative flex-1 min-w-55">
+                        <select
+                        value={searchStatus}
+                        onChange={(e)=>setSearchStatus(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
+                        >
+                            <option value="">All statuses</option>
+                            <option value="Upcoming">Upcoming</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+
                 <button
                 onClick={()=>{
                     setSubmittedSearchName(searchName);
                     setSubmittedSearchLocation(searchLocation);
+                    setSubmittedSearchFormat(searchFormat);
+                    setSubmittedSearchStatus(searchStatus);
                     setPage(1);
                 }}
-                className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-md transition-colors duration-300 shadow-sm"
+                className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-full transition-colors duration-300 shadow-sm"
                 >
                     Search
                 </button>
@@ -138,7 +211,7 @@ function TournamentList() {
         </div>
         
         <h1 className="text-5xl font-extrabold text-white mb-10 tracking-tight">
-          {totalCount} Available <span className="text-orange-500">{totalCount>1 ? "Tournaments" : "Tournament"}</span>
+          {totalCount} Available <span className="text-orange-500">{totalCount===1 ? "Tournament" : "Tournaments"}</span>
         </h1>
 
         {error && (
