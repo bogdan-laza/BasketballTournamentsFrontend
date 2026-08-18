@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useSearchParams } from 'react-router-dom';
 import api from "./utils/api";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Tournament {
   tournamentId: number;
@@ -39,16 +41,40 @@ function TournamentList() {
   const [searchFormat, setSearchFormat]=useState(searchParams.get("format") || "");
   const [submittedSearchFormat, setSubmittedSearchFormat]=useState(searchParams.get("format") || "");
 
-  const [searchStatus, setSearchStatus]=useState(searchParams.get("status") || "Upcoming");
-  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(searchParams.get("status") || "Upcoming");
+  const urlStatus=searchParams.get("status");
+  const initialStatus=urlStatus!==null ? urlStatus : "Upcoming";
+  const defaultSortOrder=(initialStatus==="Upcoming" || initialStatus==="Ongoing" ? "asc" : "desc");
+
+  const [searchStatus, setSearchStatus]=useState(initialStatus);
+  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(initialStatus);
+
+  const [searchMonth, setSearchMonth]=useState(searchParams.get("month") || "");
+  const [submittedSearchMonth, setSubmittedSearchMonth]=useState(searchParams.get("month") || "");
+
+  const [startDate, setStartDate]=useState<Date|null>(searchParams.get("start") ? new Date(searchParams.get("start") as string) : null);
+  const [submittedStartDate, setSubmittedStartDate]=useState<Date|null>(startDate);
+
+  const [endDate, setEndDate]=useState<Date|null>(searchParams.get("end") ? new Date(searchParams.get("end") as string) : null);
+  const [submittedEndDate, setSubmittedEndDate]=useState<Date|null>(endDate);
+
+  const [isCalendarOpen, setIsCalendarOpen]=useState(false);
+
+  const calendarRef=useRef<HTMLDivElement>(null);
 
   const [sortBy, setSortBy]=useState(searchParams.get("sortBy") || "TournamentDate");
-  const [sortOrder, setSortOrder]=useState(searchParams.get("sortOrder") || "asc");
+  const [submittedSortBy, setSubmittedSortBy] = useState(searchParams.get("sortBy") || "TournamentDate");
+
+  const [sortOrder, setSortOrder]=useState(searchParams.get("sortOrder") || defaultSortOrder);
+  const [submittedSortOrder, setSubmittedSortOrder] = useState(searchParams.get("sortOrder") || defaultSortOrder);
 
  useEffect(() => {
     setLoading(true);
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}&sortBy=${sortBy}&sortOrder=${sortOrder}`)
+    const startString=submittedStartDate ? submittedStartDate.toISOString() : "";
+    const endString=submittedEndDate ? submittedEndDate.toISOString() : "";
+    const monthToSend=submittedSearchMonth==="interval" ? "" : submittedSearchMonth;
+
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}&tournamentMonth=${monthToSend}&startDate=${startString}&endDate=${endString}&sortBy=${submittedSortBy}&sortOrder=${submittedSortOrder}`)
       .then((response) => {
         const data = response.data; 
 
@@ -69,7 +95,7 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, sortBy, sortOrder]);
+  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, submittedSearchMonth, submittedStartDate, submittedEndDate, submittedSortBy, submittedSortOrder]);
 
   useEffect(()=>{
     const params=new URLSearchParams();
@@ -83,15 +109,36 @@ function TournamentList() {
     if(submittedSearchFormat)
         params.set("format", submittedSearchFormat);
 
-    if(submittedSearchStatus)
-        params.set("status", submittedSearchStatus);
+    if(submittedSearchMonth)
+        params.set("month", submittedSearchMonth);
 
+    if(submittedStartDate)
+        params.set("start", submittedStartDate.toISOString());
+
+    if(submittedEndDate)
+        params.set("end", submittedEndDate.toISOString());
+
+    params.set("status", submittedSearchStatus);
     params.set("page", page.toString());
-    params.set("sortBy", sortBy);
-    params.set("sortOrder", sortOrder);
+    params.set("sortBy", submittedSortBy);
+    params.set("sortOrder", submittedSortOrder);
 
     setSearchParams(params);
-  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, page, sortBy, sortOrder])
+  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, submittedSearchMonth, submittedStartDate, submittedEndDate, page, submittedSortBy, submittedSortOrder])
+
+  useEffect(()=>{
+    function handleClickOutside(event:MouseEvent){
+        if(calendarRef.current && !calendarRef.current.contains(event.target as Node)){
+            setIsCalendarOpen(false);
+        }
+    }
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return ()=>{
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, [])
 
   const handlePreviousPage=()=> {
     setPage((prev)=>Math.max(1, prev-1));
@@ -111,6 +158,14 @@ function TournamentList() {
     groups[monthYear].push(tournament);
     return groups;
   }, {} as Record<string, Tournament[]>);
+
+  const formatShortDate=(date:Date)=>{
+    return date.toLocaleDateString('en-GB', {
+        day:'numeric',
+        month:'short',
+        year:'numeric'
+    });
+  }
   
 
   return (
@@ -119,7 +174,7 @@ function TournamentList() {
 
         <div className="mb-5 mt-5 w-full max-w-6xl mx-auto">
             <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex-1 min-w-55">
+                <div className="relative w-45">
                     <input 
                     type="text"
                     placeholder="Name"
@@ -145,7 +200,7 @@ function TournamentList() {
                     )}
                 </div>
 
-                    <div className="relative flex-1 min-w-55">
+                    <div className="relative w-45">
                         <input 
                         type="text"
                         placeholder="Location"
@@ -171,7 +226,118 @@ function TournamentList() {
                         )}
                     </div>
 
-                    <div className="relative flex-1 min-w-55">
+                   <div className="relative w-62" ref={calendarRef}>
+                        {searchMonth === "interval" && startDate && endDate ? (
+                            <div 
+                                onClick={() => setIsCalendarOpen(true)}
+                                className="w-full flex items-center justify-between px-5 py-4 bg-slate-800 text-white text-lg font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 hover:border-orange-500 transition-colors shadow-sm cursor-pointer"
+                            >
+                                <span className="truncate">
+                                    {formatShortDate(startDate!)} - {formatShortDate(endDate!)}
+                                </span>
+                                
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation(); 
+                                        setSearchMonth("");  
+                                        setStartDate(null);  
+                                        setEndDate(null);
+                                        setIsCalendarOpen(false);
+                                    }}
+                                    className="text-slate-400 hover:text-white transition-colors p-1 shrink-0"
+                                    title="Clear dates"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                                ) : (
+                                    <>
+                                        <select
+                                            value={searchMonth}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setSearchMonth(val);
+                                                
+                                                if (val === "interval") {
+                                                    setIsCalendarOpen(true);
+                                                } else {
+                                                    setIsCalendarOpen(false);
+                                                    setStartDate(null);
+                                                    setEndDate(null);
+                                                }
+                                            }}
+                                            className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
+                                        >
+                                            <option value="">Anytime</option>
+                                            <option value="interval">Set interval...</option>
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+
+                                        {searchMonth !== "" && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault(); 
+                                                    e.stopPropagation();
+                                                    setSearchMonth("");
+                                                    setStartDate(null);
+                                                    setEndDate(null);
+                                                    setIsCalendarOpen(false);
+                                                }}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
+                                                title="Clear selection"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
+
+                                        {searchMonth==="" && (
+                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {isCalendarOpen && searchMonth === "interval" && (
+                                    <div className="absolute top-full left-0 mt-2 z-50 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl p-4">
+                                        <DatePicker
+                                            selected={startDate}
+                                            onChange={(dates) => {
+                                                const [start, end] = dates;
+                                                setStartDate(start);
+                                                setEndDate(end);
+                                                
+                                                if (start && end) setIsCalendarOpen(false); 
+                                            }}
+                                            startDate={startDate}
+                                            endDate={endDate}
+                                            selectsRange
+                                            inline
+                                            showYearDropdown
+                                        />
+                                        
+                                    </div>
+                                )}
+                            </div>
+
+                    <div className="relative w-40">
                         <select
                         value={searchFormat}
                         onChange={(e)=>setSearchFormat(e.target.value)}
@@ -184,17 +350,45 @@ function TournamentList() {
                             <option value="5v5">5v5</option>
                         </select>
 
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                        </div>
+                        {searchFormat !== "" && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault(); 
+                                    e.stopPropagation();
+                                    setSearchFormat("");
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
+                                title="Clear selection"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+
+                        {searchFormat==="" &&(
+                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                        )}
                     </div>
 
-                     <div className="relative flex-1 min-w-55">
+                     <div className="relative w-45">
                         <select
                         value={searchStatus}
-                        onChange={(e)=>setSearchStatus(e.target.value)}
+                        onChange={(e)=>{
+                            const newStatus=e.target.value;
+                            setSearchStatus(newStatus);
+
+                            if(newStatus==="Upcoming" || newStatus==="Ongoing"){
+                                setSortOrder("asc");
+                            }
+                            else{
+                                setSortOrder("desc");
+                            }
+                        }}
                         className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
                         >
                             <option value="">All statuses</option>
@@ -204,11 +398,29 @@ function TournamentList() {
                             <option value="Cancelled">Cancelled</option>
                         </select>
 
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
+                        {searchStatus !== "" && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault(); 
+                                    e.stopPropagation();
+                                    setSearchStatus("");
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
+                                title="Clear selection"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+
+                        {searchStatus==="" && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
                         </div>
+                        )}
                     </div>
 
                 <button
@@ -217,6 +429,11 @@ function TournamentList() {
                     setSubmittedSearchLocation(searchLocation);
                     setSubmittedSearchFormat(searchFormat);
                     setSubmittedSearchStatus(searchStatus);
+                    setSubmittedSearchMonth(searchMonth);
+                    setSubmittedStartDate(startDate);
+                    setSubmittedEndDate(endDate);
+                    setSubmittedSortBy(sortBy);
+                    setSubmittedSortOrder(sortOrder);
                     setPage(1);
                 }}
                 className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-full transition-colors duration-300 shadow-sm"
