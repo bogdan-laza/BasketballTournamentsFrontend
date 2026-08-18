@@ -243,6 +243,11 @@ function TournamentList() {
                                         setStartDate(null);  
                                         setEndDate(null);
                                         setIsCalendarOpen(false);
+
+                                        setSubmittedSearchMonth("");
+                                        setSubmittedStartDate(null);
+                                        setSubmittedEndDate(null);
+                                        setPage(1);
                                     }}
                                     className="text-slate-400 hover:text-white transition-colors p-1 shrink-0"
                                     title="Clear dates"
@@ -356,6 +361,7 @@ function TournamentList() {
                                     e.preventDefault(); 
                                     e.stopPropagation();
                                     setSearchFormat("");
+                                    setSubmittedSearchFormat("");
                                 }}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
                                 title="Clear selection"
@@ -404,6 +410,7 @@ function TournamentList() {
                                     e.preventDefault(); 
                                     e.stopPropagation();
                                     setSearchStatus("");
+                                    setSubmittedSearchStatus("");
                                 }}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
                                 title="Clear selection"
@@ -443,9 +450,44 @@ function TournamentList() {
             </div>
         </div>
         
-        <h1 className="text-5xl font-extrabold text-white mb-10 tracking-tight">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 mt-10 gap-6">
+        <h1 className="text-5xl font-extrabold text-white tracking-tight">
           {totalCount} Available <span className="text-orange-500">{totalCount===1 ? "Tournament" : "Tournaments"}</span>
         </h1>
+
+        <div className="flex items-center gap-3 shrink-0">
+            <label className="text-slate-400 font-medium whitespace-nowrap">
+                Sort by:
+            </label>
+
+            <div className="relative">
+                <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e)=>{
+                    const [newSortBy, newSortOrder]=e.target.value.split("-");
+
+                    setSortBy(newSortBy);
+                    setSortOrder(newSortOrder);
+
+                    setSubmittedSortBy(newSortBy);
+                    setSubmittedSortOrder(newSortOrder);
+                    setPage(1);
+                }}
+                className="appearance-none w-full bg-slate-800 text-white font-semibold py-3 pl-5 pr-12 rounded-full border border-slate-700 hover:border-slate-500 focus:outline-none focus:border-orange-500 transition-colors cursor-pointer">
+                    <option value="TournamentDate-asc">Date: Oldest to Newest</option>
+                    <option value="TournamentDate-desc">Date: Newest to Oldest</option>
+                    <option value="Prize-desc">Prize: High to Low</option>
+                    <option value="EntryFee-asc">Entry Fee: Low to High</option>
+                </select>
+
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        </div>
 
         {error && (
           <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg mb-6">
