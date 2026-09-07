@@ -33,48 +33,39 @@ function TournamentList() {
   const [totalCount, setTotalCount]=useState(1);
 
   const [searchName, setSearchName]=useState(searchParams.get("name") || "");
-  const [submittedSearchName, setSubmittedSearchName]=useState(searchParams.get("name") || "");
 
   const [searchLocation, setSearchLocation]=useState(searchParams.get("location") || "");
-  const [submittedSearchLocation, setSubmittedSearchLocation]=useState(searchParams.get("location") || "");
 
   const [searchFormat, setSearchFormat]=useState(searchParams.get("format") || "");
-  const [submittedSearchFormat, setSubmittedSearchFormat]=useState(searchParams.get("format") || "");
 
   const urlStatus=searchParams.get("status");
   const initialStatus=urlStatus!==null ? urlStatus : "Upcoming";
   const defaultSortOrder=(initialStatus==="Upcoming" || initialStatus==="Ongoing" ? "asc" : "desc");
 
   const [searchStatus, setSearchStatus]=useState(initialStatus);
-  const [submittedSearchStatus, setSubmittedSearchStatus]=useState(initialStatus);
 
   const [searchMonth, setSearchMonth]=useState(searchParams.get("month") || "");
-  const [submittedSearchMonth, setSubmittedSearchMonth]=useState(searchParams.get("month") || "");
 
   const [startDate, setStartDate]=useState<Date|null>(searchParams.get("start") ? new Date(searchParams.get("start") as string) : null);
-  const [submittedStartDate, setSubmittedStartDate]=useState<Date|null>(startDate);
 
   const [endDate, setEndDate]=useState<Date|null>(searchParams.get("end") ? new Date(searchParams.get("end") as string) : null);
-  const [submittedEndDate, setSubmittedEndDate]=useState<Date|null>(endDate);
 
   const [isCalendarOpen, setIsCalendarOpen]=useState(false);
 
   const calendarRef=useRef<HTMLDivElement>(null);
 
   const [sortBy, setSortBy]=useState(searchParams.get("sortBy") || "TournamentDate");
-  const [submittedSortBy, setSubmittedSortBy] = useState(searchParams.get("sortBy") || "TournamentDate");
 
   const [sortOrder, setSortOrder]=useState(searchParams.get("sortOrder") || defaultSortOrder);
-  const [submittedSortOrder, setSubmittedSortOrder] = useState(searchParams.get("sortOrder") || defaultSortOrder);
 
  useEffect(() => {
     setLoading(true);
 
-    const startString=submittedStartDate ? submittedStartDate.toISOString() : "";
-    const endString=submittedEndDate ? submittedEndDate.toISOString() : "";
-    const monthToSend=submittedSearchMonth==="interval" ? "" : submittedSearchMonth;
+    const startString=startDate ? startDate.toISOString() : "";
+    const endString=endDate ? endDate.toISOString() : "";
+    const monthToSend=searchMonth==="interval" ? "" : searchMonth;
 
-    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${submittedSearchName}&tournamentLocation=${submittedSearchLocation}&tournamentFormat=${submittedSearchFormat}&status=${submittedSearchStatus}&tournamentMonth=${monthToSend}&startDate=${startString}&endDate=${endString}&sortBy=${submittedSortBy}&sortOrder=${submittedSortOrder}`)
+    api.get(`/Tournament?page=${page}&pageSize=${pageSize}&tournamentName=${searchName}&tournamentLocation=${searchLocation}&tournamentFormat=${searchFormat}&status=${searchStatus}&tournamentMonth=${monthToSend}&startDate=${startString}&endDate=${endString}&sortBy=${sortBy}&sortOrder=${sortOrder}`)
       .then((response) => {
         const data = response.data; 
 
@@ -95,36 +86,36 @@ function TournamentList() {
       .finally(() => { 
         setLoading(false); 
       });
-  }, [page, pageSize, submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, submittedSearchMonth, submittedStartDate, submittedEndDate, submittedSortBy, submittedSortOrder]);
+  }, [page, pageSize, searchName, searchLocation, searchFormat, searchStatus, searchMonth, startDate, endDate, sortBy, sortOrder]);
 
   useEffect(()=>{
     const params=new URLSearchParams();
 
-    if(submittedSearchName)
-        params.set("name", submittedSearchName);
+    if(searchName)
+        params.set("name", searchName);
 
-    if(submittedSearchLocation)
-        params.set("location", submittedSearchLocation);
+    if(searchLocation)
+        params.set("location", searchLocation);
 
-    if(submittedSearchFormat)
-        params.set("format", submittedSearchFormat);
+    if(searchFormat)
+        params.set("format", searchFormat);
 
-    if(submittedSearchMonth)
-        params.set("month", submittedSearchMonth);
+    if(searchMonth)
+        params.set("month", searchMonth);
 
-    if(submittedStartDate)
-        params.set("start", submittedStartDate.toISOString());
+    if(startDate)
+        params.set("start", startDate.toISOString());
 
-    if(submittedEndDate)
-        params.set("end", submittedEndDate.toISOString());
+    if(endDate)
+        params.set("end", endDate.toISOString());
 
-    params.set("status", submittedSearchStatus);
+    params.set("status", searchStatus);
     params.set("page", page.toString());
-    params.set("sortBy", submittedSortBy);
-    params.set("sortOrder", submittedSortOrder);
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
 
     setSearchParams(params);
-  }, [submittedSearchName, submittedSearchLocation, submittedSearchFormat, submittedSearchStatus, submittedSearchMonth, submittedStartDate, submittedEndDate, page, submittedSortBy, submittedSortOrder])
+  }, [searchName, searchLocation, searchFormat, searchStatus, searchMonth, startDate, endDate, page, sortBy, sortOrder])
 
   useEffect(()=>{
     function handleClickOutside(event:MouseEvent){
@@ -174,12 +165,15 @@ function TournamentList() {
 
         <div className="mb-5 mt-5 w-full max-w-6xl mx-auto">
             <div className="flex flex-wrap items-center gap-3">
-                <div className="relative w-45">
+                <div className="relative w-55">
                     <input 
                     type="text"
                     placeholder="Name"
                     value={searchName}
-                    onChange={(e)=>setSearchName(e.target.value)}
+                    onChange={(e)=>{
+                        setSearchName(e.target.value);
+                        setPage(1);
+                    }}
                     className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
                     /> 
 
@@ -187,7 +181,6 @@ function TournamentList() {
                         <button 
                         onClick={()=>{
                             setSearchName("");
-                            setSubmittedSearchName("");
                             setPage(1);
                         }}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
@@ -200,12 +193,15 @@ function TournamentList() {
                     )}
                 </div>
 
-                    <div className="relative w-45">
+                    <div className="relative w-55">
                         <input 
                         type="text"
                         placeholder="Location"
                         value={searchLocation}
-                        onChange={(e)=>setSearchLocation(e.target.value)}
+                        onChange={(e)=>{
+                            setSearchLocation(e.target.value);
+                            setPage(1);
+                        }}
                         className="w-full px-5 py-4 pr-12 bg-slate-800 text-white text-lg font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors placeholder-gray-400 shadow-sm"
                         /> 
 
@@ -213,7 +209,6 @@ function TournamentList() {
                             <button 
                             onClick={()=>{
                                 setSearchLocation("");
-                                setSubmittedSearchLocation("");
                                 setPage(1);
                             }}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1"
@@ -226,7 +221,7 @@ function TournamentList() {
                         )}
                     </div>
 
-                   <div className="relative w-62" ref={calendarRef}>
+                   <div className="relative w-70" ref={calendarRef}>
                         {searchMonth === "interval" && startDate && endDate ? (
                             <div 
                                 onClick={() => setIsCalendarOpen(true)}
@@ -243,10 +238,6 @@ function TournamentList() {
                                         setStartDate(null);  
                                         setEndDate(null);
                                         setIsCalendarOpen(false);
-
-                                        setSubmittedSearchMonth("");
-                                        setSubmittedStartDate(null);
-                                        setSubmittedEndDate(null);
                                         setPage(1);
                                     }}
                                     className="text-slate-400 hover:text-white transition-colors p-1 shrink-0"
@@ -264,6 +255,7 @@ function TournamentList() {
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 setSearchMonth(val);
+                                                setPage(1);
                                                 
                                                 if (val === "interval") {
                                                     setIsCalendarOpen(true);
@@ -300,6 +292,7 @@ function TournamentList() {
                                                     setStartDate(null);
                                                     setEndDate(null);
                                                     setIsCalendarOpen(false);
+                                                    setPage(1);
                                                 }}
                                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
                                                 title="Clear selection"
@@ -329,7 +322,10 @@ function TournamentList() {
                                                 setStartDate(start);
                                                 setEndDate(end);
                                                 
-                                                if (start && end) setIsCalendarOpen(false); 
+                                                if (start && end){
+                                                     setIsCalendarOpen(false); 
+                                                     setPage(1);
+                                                }
                                             }}
                                             startDate={startDate}
                                             endDate={endDate}
@@ -342,10 +338,13 @@ function TournamentList() {
                                 )}
                             </div>
 
-                    <div className="relative w-40">
+                    <div className="relative w-45">
                         <select
                         value={searchFormat}
-                        onChange={(e)=>setSearchFormat(e.target.value)}
+                        onChange={(e)=>{
+                            setSearchFormat(e.target.value);
+                            setPage(1);
+                        }}
                         className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
                         >
                             <option value="">All formats</option>
@@ -361,7 +360,7 @@ function TournamentList() {
                                     e.preventDefault(); 
                                     e.stopPropagation();
                                     setSearchFormat("");
-                                    setSubmittedSearchFormat("");
+                                    setPage(1);
                                 }}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
                                 title="Clear selection"
@@ -394,6 +393,7 @@ function TournamentList() {
                             else{
                                 setSortOrder("desc");
                             }
+                            setPage(1);
                         }}
                         className="w-full px-5 py-4 bg-slate-800 text-lg text-white font-semibold rounded-full border border-slate-600 focus:outline-none focus:border-orange-500 transition-colors shadow-sm appearance-none cursor-pointer"
                         >
@@ -410,7 +410,7 @@ function TournamentList() {
                                     e.preventDefault(); 
                                     e.stopPropagation();
                                     setSearchStatus("");
-                                    setSubmittedSearchStatus("");
+                                    setPage(1);
                                 }}
                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 z-10"
                                 title="Clear selection"
@@ -429,24 +429,6 @@ function TournamentList() {
                         </div>
                         )}
                     </div>
-
-                <button
-                onClick={()=>{
-                    setSubmittedSearchName(searchName);
-                    setSubmittedSearchLocation(searchLocation);
-                    setSubmittedSearchFormat(searchFormat);
-                    setSubmittedSearchStatus(searchStatus);
-                    setSubmittedSearchMonth(searchMonth);
-                    setSubmittedStartDate(startDate);
-                    setSubmittedEndDate(endDate);
-                    setSubmittedSortBy(sortBy);
-                    setSubmittedSortOrder(sortOrder);
-                    setPage(1);
-                }}
-                className="px-10 py-4 bg-orange-500 hover:bg-orange-600 text-white text-lg font-bold rounded-full transition-colors duration-300 shadow-sm"
-                >
-                    Search
-                </button>
             </div>
         </div>
         
@@ -468,9 +450,6 @@ function TournamentList() {
 
                     setSortBy(newSortBy);
                     setSortOrder(newSortOrder);
-
-                    setSubmittedSortBy(newSortBy);
-                    setSubmittedSortOrder(newSortOrder);
                     setPage(1);
                 }}
                 className="appearance-none w-full bg-slate-800 text-white font-semibold py-3 pl-5 pr-12 rounded-full border border-slate-700 hover:border-slate-500 focus:outline-none focus:border-orange-500 transition-colors cursor-pointer">
@@ -539,7 +518,7 @@ function TournamentList() {
 
                         <Link 
                             to={`/tournament/${tournament.tournamentId}`}
-                            className="self-start bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-6 rounded-full hover:-translate-y-0.5 transform transition-all duration-300"
+                            className="self-start bg-orange-500 text-white font-bold py-2.5 px-6 rounded-full transform transition-all duration-300"
                         >
                             View Details
                         </Link>

@@ -22,12 +22,10 @@ function Navbar(){
     const dropdownRef=useRef<HTMLDivElement>(null);
     const navigate=useNavigate();
 
-    const {isAuthenticated, logout}=useAuth();
+    const {isAuthenticated, token, logout}=useAuth();
 
     useEffect(()=>{
-        if(isAuthenticated){
-            const token=localStorage.getItem("token");
-            if(token){
+        if(isAuthenticated && token){
                 try{
                     const payloadBase64=token.split('.')[1];
                     const decodedPayload=JSON.parse(atob(payloadBase64));
@@ -45,11 +43,10 @@ function Navbar(){
                     console.error("Failed to decode token:", error);
                 }
             }
-        }
-        else{
-            setCurrentUser(null);
-        }
-    }, [isAuthenticated]);
+            else{
+                setCurrentUser(null);
+            }
+        }, [isAuthenticated, token]);
 
     useEffect(()=>{
         function handleClickOutside(event:MouseEvent){
@@ -90,6 +87,7 @@ function Navbar(){
                     <Link to="/mytournaments" className="hover:text-orange-400 transition-colors">My Tournaments</Link>
                     <Link to="/myteams" className="hover:text-orange-400 transition-colors">My Teams</Link>
                     <Link to="/hoop" className="hover:text-orange-400 transition-colors">Hoop</Link>
+                    <Link to="/community" className="hover:text-orange-400 transition-colors">Community</Link>
                 </>
                 ):(
                     <>

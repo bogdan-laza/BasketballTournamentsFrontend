@@ -7,6 +7,7 @@ import SignupPage from "./SignupPage";
 import LogInPage from "./LogInPage";
 import Navbar from "./Navbar";
 import VerifyEmailPage from "./VerifyEmailPage";
+import MyTeams from "./MyTeams";
 
 function App(){
   return(
@@ -21,6 +22,7 @@ function App(){
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LogInPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/myteams" element={<MyTeams />} />
       </Routes>
     </>
   );
