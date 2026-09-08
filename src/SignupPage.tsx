@@ -13,6 +13,7 @@ function SignupPage(){
         passwordHash:"",
         email:"",
         phoneNumber:"",
+        playerLevel: 1,
     });
 
     const [error, setError]=useState<string | null>(null);
@@ -34,6 +35,7 @@ function SignupPage(){
         try{
             const finalPayload={
                 ...user,
+                playerLevel: Number(user.playerLevel),
                 userId:0,
                 refreshToken:"",
                 createdAt:new Date().toISOString(),
@@ -92,7 +94,7 @@ function SignupPage(){
                 </div>
             )}
 
-            <form onSubmit={step===2 ? handleSubmit : (e)=>{e.preventDefault();setStep(2);}}>
+            <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); setStep(step + 1); }}>
                 {step===1 && (
                     <div className="space-y-4 animate-fadeIn">
                         <div>
@@ -156,8 +158,46 @@ function SignupPage(){
                                 &larr; Back
                             </button>
 
+                            <button type="submit" className="w-2/3 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg shadow-lg transition-all">
+                                Continue &rarr;
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {step === 3 && (
+                    <div className="space-y-4 animate-fadeIn">
+                        <div>
+                            <label className="block text-slate-300 text-sm font-bold mb-2">
+                                Choose your player level
+                            </label>
+                            
+                            <div className="relative"> 
+                                <select 
+                                    name="playerLevel" 
+                                    value={user.playerLevel} 
+                                    onChange={handleChange as any} 
+                                    className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:border-orange-500 transition-colors appearance-none cursor-pointer"
+                                >
+                                    <option value={1}>1 (Beginner)</option>
+                                    <option value={2}>2 (Intermediate)</option>
+                                    <option value={3}>3 (Veteran)</option>
+                                </select>
+
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex gap-4 mt-8">
+                            <button type="button" onClick={() => setStep(2)} className="w-1/3 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition-all">
+                                &larr; Back
+                            </button>
                             <button type="submit" disabled={loading} className="w-2/3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3 rounded-lg shadow-lg transition-all">
-                                {loading?"Creating...": "Create account"}
+                                {loading ? "Creating..." : "Create account"}
                             </button>
                         </div>
                     </div>
