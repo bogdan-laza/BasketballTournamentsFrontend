@@ -8,6 +8,7 @@ import LogInPage from "./LogInPage";
 import Navbar from "./Navbar";
 import VerifyEmailPage from "./VerifyEmailPage";
 import MyTeams from "./MyTeams";
+import MyProfile from "./MyProfile";
 
 function App(){
   return(
@@ -23,6 +24,7 @@ function App(){
         <Route path="/login" element={<LogInPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/myteams" element={<MyTeams />} />
+        <Route path="/myprofile" element={<MyProfile />} />
       </Routes>
     </>
   );
