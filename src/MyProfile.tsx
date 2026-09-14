@@ -12,6 +12,7 @@ interface User {
     personRole: string;
     createdAt: string;
     profileImageUrl?: string;
+    playerLevel: number;
 }
 
 interface ReviewStats {
@@ -21,13 +22,29 @@ interface ReviewStats {
     avgLevel: number;
 }
 
-const SegmentedStatBar = ({ label, value }: { label: string; value: number }) => {
+const SegmentedStatBar = ({ label, value, tooltipText }: { label: string; value: number; tooltipText: string }) => {
     return (
-        <div className="flex flex-col bg-slate-800/80 p-4 rounded-xl border border-slate-700 w-full sm:w-65 shadow-md">
+        <div className="flex flex-col bg-slate-800/80 p-4 rounded-xl border border-slate-700 shadow-md w-full sm:w-[260px]">
             <div className="flex justify-between items-end mb-2 px-1">
-                <span className="uppercase font-extrabold italic text-slate-200 tracking-wider text-sm">
-                    {label}
-                </span>
+                
+                <div className="flex items-center gap-1.5 relative group">
+                    <span className="uppercase font-extrabold italic text-slate-200 tracking-wider text-sm">
+                        {label}
+                    </span>
+                    
+                    <div className="cursor-help text-slate-400 hover:text-slate-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+
+                    <div className="absolute bottom-full left-0 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-600 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none normal-case not-italic font-normal tracking-normal">
+                        {tooltipText}
+                        <div className="absolute top-full left-4 -mt-[1px] border-4 border-transparent border-t-slate-600"></div>
+                        <div className="absolute top-full left-4 -mt-[2px] border-4 border-transparent border-t-slate-900"></div>
+                    </div>
+                </div>
+
                 <span className="text-orange-500 font-black text-sm">
                     {value.toFixed(1)}
                 </span>
@@ -35,7 +52,6 @@ const SegmentedStatBar = ({ label, value }: { label: string; value: number }) =>
             <div className="flex gap-1.5 h-5 px-1">
                 {[0, 1, 2, 3, 4].map((index) => {
                     const fillPercentage = Math.min(Math.max(value - index, 0), 1) * 100;
-                    
                     return (
                         <div 
                             key={index} 
@@ -44,6 +60,50 @@ const SegmentedStatBar = ({ label, value }: { label: string; value: number }) =>
                             <div 
                                 className="absolute inset-y-0 left-0 bg-orange-500 transition-all duration-500" 
                                 style={{ width: `${fillPercentage}%` }}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+const LevelStatBar = ({ label, value, tooltipText }: { label: string; value: number; tooltipText: string }) => {
+    const barHeights = ["h-7", "h-9", "h-11"];
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1.5 relative group mb-2 justify-center">
+                
+                <div className="absolute bottom-full right-1/2 translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-600 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none normal-case not-italic font-normal tracking-normal text-center">
+                    {tooltipText}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-600"></div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[2px] border-4 border-transparent border-t-slate-900"></div>
+                </div>
+
+                <div className="cursor-help text-slate-400 hover:text-slate-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+
+                <span className="uppercase font-extrabold italic text-slate-200 tracking-wider text-sm whitespace-nowrap">
+                    {label} <span className="text-orange-500 ml-1 text-sm">{value.toFixed(1)}</span>
+                </span>
+            </div>
+            
+            <div className="flex gap-1.5 items-end justify-center h-7 w-full mt-5">
+                {[0, 1, 2].map((index) => {
+                    const fillPercentage = Math.min(Math.max(value - index, 0), 1) * 100;
+                    return (
+                        <div 
+                            key={index} 
+                            className={`relative w-4 ${barHeights[index]} bg-slate-800 rounded-sm overflow-hidden border border-slate-700/50`}
+                        >
+                            <div 
+                                className="absolute bottom-0 left-0 w-full bg-orange-500 transition-all duration-500" 
+                                style={{ height: `${fillPercentage}%` }}
                             />
                         </div>
                     );
@@ -144,15 +204,44 @@ function MyProfile(){
                     <h1 className="text-3xl font-extrabold text-white mt-4 tracking-tight">
                         {user.firstName} {user.lastName}
                     </h1>
-                   
-                     {stats && (
-                    <div className="flex flex-col items-center">
-                        <p className="text-slate-500 text-sm mb-4 mt-1 font-semibold">
+
+                {stats && (
+                    <div className="w-full flex flex-col items-center mb-12 mt-4">
+                        <p className="text-slate-500 text-sm mb-6 font-semibold text-center">
                             Based on {stats.numberOfReviews} {stats.numberOfReviews === 1 ? 'review' : 'reviews'}
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-6 justify-center w-full">
-                            <SegmentedStatBar label="Sportsmanship" value={stats.avgSportsmanship} />
-                            <SegmentedStatBar label="Reliability" value={stats.avgReliability} />
+                        
+                        <div className="relative flex flex-col md:flex-row gap-6">
+                            
+                            <SegmentedStatBar 
+                                label="Sportsmanship" 
+                                value={stats.avgSportsmanship} 
+                                tooltipText="Based on fair play, respect for opponents, and being gracious in victory or defeat."
+                            />
+                            
+                            <SegmentedStatBar 
+                                label="Reliability" 
+                                value={stats.avgReliability} 
+                                tooltipText="Based on punctuality and the commitment to show up for scheduled matches."
+                            />
+
+                            <div className="hidden md:flex absolute top-full right-full mt-10 pr-6 border-r-2 border-orange-500 flex-row items-start justify-end gap-6 h-20">
+                                <LevelStatBar 
+                                    label="My Level" 
+                                    value={user.playerLevel} 
+                                    tooltipText="The personal skill level you selected during registration (1 = Beginner, 2 = Intermediate, 3 = Veteran)."
+                                />
+                                <LevelStatBar 
+                                    label="Community Rating" 
+                                    value={stats.avgLevel} 
+                                    tooltipText="The average skill level evaluated by other players who played with you."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="md:hidden flex flex-row justify-center gap-6 mt-8">
+                            <LevelStatBar label="My Level" value={user.playerLevel} tooltipText="The personal skill level you selected during registration (1 = Beginner, 2 = Intermediate, 3 = Veteran)." />
+                            <LevelStatBar label="Community Rating" value={stats.avgLevel} tooltipText="The average skill level evaluated by other players who played with you." />
                         </div>
                     </div>
                 )}
