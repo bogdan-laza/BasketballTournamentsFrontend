@@ -17,6 +17,7 @@ interface User {
     county?: string;
     city?: string;
     handedness?: string;
+    height?: number;
 }
 
 interface ReviewStats {
@@ -169,6 +170,18 @@ function MyProfile(){
         return age;
     };
 
+    const todayIndex=new Date().getDay();
+    const realDay=todayIndex===0 ? 6 : todayIndex-1;
+    const mockPlayData = [true, false, true, false, false, false, false];
+
+    const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => {
+        const isInFuture=index>realDay;
+        const played=!isInFuture && mockPlayData[index];
+        return {day, isInFuture, played};
+    })
+
+    const timesPlayedThisWeek=weekDays.filter(d=>d.played).length;
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -241,7 +254,7 @@ function MyProfile(){
                                 tooltipText="Based on punctuality and the commitment to show up for scheduled matches."
                             />
 
-                            <div className="hidden md:flex absolute top-full right-full mt-10 pr-6 border-r-2 border-orange-500 flex-row items-start justify-end gap-6 h-30">
+                            <div className="hidden md:flex absolute top-full right-full mt-10 pr-6 border-r-2 border-orange-500 flex-row items-start justify-end gap-6 h-34">
                                 <LevelStatBar 
                                     label="My Level" 
                                     value={user.playerLevel} 
@@ -254,34 +267,73 @@ function MyProfile(){
                                 />
                             </div>
 
-                            <div className="hidden md:flex absolute top-full left-0 mt-11 pl-40 flex-col justify-start gap-3.5 h-24">
-                                <div className="flex items-center gap-2.5 group">
-                                     <span className="text-md text-white font-bold tracking-wide">
-                                        Location:
-                                    </span>
-                                    <span className="text-md text-slate-300 font-medium tracking-wide">
-                                        {user.city ? `${user.city}, ${user.county}` : "Location unknown"}
-                                    </span>
+                           <div className="hidden md:flex absolute top-full left-0 right-0 mt-10 border-r-2 border-orange-500 flex-row justify-center items-start h-34">
+                                <div className="flex flex-col items-start justify-start gap-3">
+                                    
+                                    <div className="flex items-center gap-2.5 group whitespace-nowrap">
+                                        <span className="text-md text-white font-extrabold tracking-wide">
+                                            Location:
+                                        </span>
+                                        <span className="text-md text-slate-300 font-medium tracking-wide">
+                                            {user.city ? `${user.city}, ${user.county}` : "Location unknown"}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 group whitespace-nowrap">
+                                        <span className="text-md text-white font-extrabold tracking-wide">
+                                            Age:
+                                        </span>
+                                        <span className="text-md text-slate-300 font-medium tracking-wide">
+                                            {getAge(user.dateOfBirth)} years old
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 group whitespace-nowrap">
+                                        <span className="text-md text-white font-extrabold tracking-wide">
+                                            Handedness:
+                                        </span>
+                                        <span className="text-md text-slate-300 font-medium tracking-wide"> 
+                                            {user.handedness ? (user.handedness === "Ambidextrous" ? `${user.handedness}` : `${user.handedness} Handed`) : "N/A"}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 group whitespace-nowrap">
+                                        <span className="text-md text-white font-extrabold tracking-wide">
+                                            Height:
+                                        </span>
+                                        <span className="text-md text-slate-300 font-medium tracking-wide">
+                                            {user.height ? `${user.height / 100} m`  : "N/A"} 
+                                        </span>
+                                    </div>
+
                                 </div>
 
-                                <div className="flex items-center gap-2.5 group">
-                                     <span className="text-md text-white font-bold tracking-wide">
-                                        Age:
+                                <div className="absolute top-0 left-full pl-6 flex flex-col w-max gap-5">
+                                    <span className="text-md text-white font-extrabold tracking-wide mb-3 whitespace-nowrap">
+                                        You've played <span className="text-orange-500 ml-1">{timesPlayedThisWeek}</span> times this week:
                                     </span>
-                                    <span className="text-md text-slate-300 font-medium tracking-wide">
-                                        {getAge(user.dateOfBirth)} years old
-                                    </span>
+                                    
+                                    <div className="flex flex-row items-center gap-4">
+                                        {weekDays.map(weekDay => (
+                                            <div 
+                                                key={weekDay.day} 
+                                                className={`flex items-center gap-1.5 text-[14px] font-bold tracking-wide ${weekDay.isInFuture ? 'text-slate-600 opacity-50' : 'text-slate-300'}`}
+                                            >
+                                                {/* Icon Logic */}
+                                                {!weekDay.isInFuture ? (
+                                                    weekDay.played ? (
+                                                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                    ) : (
+                                                        <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    )
+                                                ) : (
+                                                    <div className="w-3.5 h-3.5 rounded-full border-[1.5px] border-slate-700"></div> // Empty circle for future days
+                                                )}
+                                                <span className="uppercase">{weekDay.day}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-
-                                <div className="flex items-center gap-2.5 group">
-                                     <span className="text-md text-white font-bold tracking-wide">
-                                        Handedness:
-                                    </span>
-                                    <span className="text-md text-slate-300 font-medium tracking-wide"> 
-                                        {user.handedness ? (user.handedness==="Ambidextrous" ? `${user.handedness}` : `${user.handedness} Handed`) : "N/A"}
-                                    </span>
-                                </div>
-
                             </div>
                         </div>
 
