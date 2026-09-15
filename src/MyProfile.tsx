@@ -13,6 +13,10 @@ interface User {
     createdAt: string;
     profileImageUrl?: string;
     playerLevel: number;
+    dateOfBirth: string; 
+    county?: string;
+    city?: string;
+    handedness?: string;
 }
 
 interface ReviewStats {
@@ -74,7 +78,7 @@ const LevelStatBar = ({ label, value, tooltipText }: { label: string; value: num
 
     return (
         <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1.5 relative group mb-2 justify-center">
+            <div className="flex items-center gap-1.5 relative group mb-8 justify-center">
                 
                 <div className="absolute bottom-full right-1/2 translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-600 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none normal-case not-italic font-normal tracking-normal text-center">
                     {tooltipText}
@@ -153,6 +157,18 @@ function MyProfile(){
         return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`.toUpperCase();
     };
 
+    const getAge = (birthdayString: string) => {
+        if (!birthdayString) return "N/A";
+        const birthday = new Date(birthdayString);
+        const today = new Date();
+        let age = today.getFullYear() - birthday.getFullYear();
+        const m = today.getMonth() - birthday.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -225,7 +241,7 @@ function MyProfile(){
                                 tooltipText="Based on punctuality and the commitment to show up for scheduled matches."
                             />
 
-                            <div className="hidden md:flex absolute top-full right-full mt-10 pr-6 border-r-2 border-orange-500 flex-row items-start justify-end gap-6 h-20">
+                            <div className="hidden md:flex absolute top-full right-full mt-10 pr-6 border-r-2 border-orange-500 flex-row items-start justify-end gap-6 h-30">
                                 <LevelStatBar 
                                     label="My Level" 
                                     value={user.playerLevel} 
@@ -236,6 +252,36 @@ function MyProfile(){
                                     value={stats.avgLevel} 
                                     tooltipText="The average skill level evaluated by other players who played with you."
                                 />
+                            </div>
+
+                            <div className="hidden md:flex absolute top-full left-0 mt-11 pl-40 flex-col justify-start gap-3.5 h-24">
+                                <div className="flex items-center gap-2.5 group">
+                                     <span className="text-md text-white font-bold tracking-wide">
+                                        Location:
+                                    </span>
+                                    <span className="text-md text-slate-300 font-medium tracking-wide">
+                                        {user.city ? `${user.city}, ${user.county}` : "Location unknown"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 group">
+                                     <span className="text-md text-white font-bold tracking-wide">
+                                        Age:
+                                    </span>
+                                    <span className="text-md text-slate-300 font-medium tracking-wide">
+                                        {getAge(user.dateOfBirth)} years old
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 group">
+                                     <span className="text-md text-white font-bold tracking-wide">
+                                        Handedness:
+                                    </span>
+                                    <span className="text-md text-slate-300 font-medium tracking-wide"> 
+                                        {user.handedness ? (user.handedness==="Ambidextrous" ? `${user.handedness}` : `${user.handedness} Handed`) : "N/A"}
+                                    </span>
+                                </div>
+
                             </div>
                         </div>
 
