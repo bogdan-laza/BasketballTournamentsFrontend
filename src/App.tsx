@@ -9,6 +9,7 @@ import Navbar from "./Navbar";
 import VerifyEmailPage from "./VerifyEmailPage";
 import MyTeams from "./MyTeams";
 import MyProfile from "./MyProfile";
+import ChangePhoto from "./ChangePhoto";
 
 function App(){
   return(
@@ -25,6 +26,7 @@ function App(){
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/myteams" element={<MyTeams />} />
         <Route path="/myprofile" element={<MyProfile />} />
+        <Route path="/myprofile/change-photo" element={<ChangePhoto />} />
       </Routes>
     </>
   );

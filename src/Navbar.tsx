@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useState, useRef, useEffect } from "react";
 import api from "./utils/api";
@@ -25,6 +25,7 @@ function Navbar(){
     const dropdownRef=useRef<HTMLDivElement>(null);
     const notificationsRef = useRef<HTMLDivElement>(null);
     const navigate=useNavigate();
+    const location=useLocation();
 
     const {isAuthenticated, token, logout}=useAuth();
 
@@ -40,7 +41,18 @@ function Navbar(){
 
                     if(userId){
                         api.get(`User/${userId}`)
-                        .then((response)=>setCurrentUser(response.data))
+                        .then((response)=>{
+                             let fetchedUser = response.data;
+
+                        if (fetchedUser.profileImage) {
+                            fetchedUser.profileImageUrl = fetchedUser.profileImage;
+                        }
+
+                        if (location.state?.newImageUrl) {
+                            fetchedUser.profileImageUrl = location.state.newImageUrl;
+                        }
+                            setCurrentUser(fetchedUser);
+                        })
                         .catch((error)=>console.error("Error fetching user for navbar:", error));
                     }
                 } catch(error){
@@ -50,7 +62,7 @@ function Navbar(){
             else{
                 setCurrentUser(null);
             }
-        }, [isAuthenticated, token]);
+        }, [isAuthenticated, token, location.state]);
 
     useEffect(()=>{
         function handleClickOutside(event:MouseEvent){

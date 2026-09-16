@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import api from "./utils/api";
 
@@ -123,8 +124,20 @@ function MyProfile(){
     const [stats, setStats] = useState<ReviewStats | null>(null);
     const [loading, setLoading] = useState(true);
     const { token, isAuthenticated } = useAuth();
-    
+    const navigate=useNavigate();
+    const location=useLocation();
+
     useEffect(() => {
+        if (location.state?.newImageUrl) {
+            setUser((prevUser: any) => ({
+                ...prevUser,
+                profileImageUrl: location.state.newImageUrl
+            }));
+            window.history.replaceState({}, document.title) 
+        }
+    }, [location.state]);
+
+   useEffect(() => {
         if (isAuthenticated && token) {
             try {
                 const payloadBase64 = token.split('.')[1];
@@ -139,7 +152,17 @@ function MyProfile(){
                         api.get(`Review/stats/${userId}`)
                     ])
                     .then(([userResponse, statsResponse]) => {
-                        setUser(userResponse.data);
+                        let fetchedUser = userResponse.data;
+
+                        if (fetchedUser.profileImage) {
+                            fetchedUser.profileImageUrl = fetchedUser.profileImage;
+                        }
+
+                        if (location.state?.newImageUrl) {
+                            fetchedUser.profileImageUrl = location.state.newImageUrl;
+                        }
+
+                        setUser(fetchedUser);
                         setStats(statsResponse.data);
                     })
                     .catch((error) => console.error("Error fetching profile data:", error))
@@ -152,7 +175,7 @@ function MyProfile(){
         } else {
             setLoading(false);
         }
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated, token, location.state]); 
 
     const getInitials = (first: string, last: string) => {
         return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`.toUpperCase();
@@ -202,7 +225,9 @@ function MyProfile(){
         <div className="min-h-screen bg-slate-900 p-8">
             <div className="max-w-4xl mx-auto mt-10">
                 <div className="flex flex-col items-center justify-center mb-12">
-                    <div className="relative h-40 w-40 rounded-full cursor-pointer group shadow-xl ring-4 ring-slate-800 hover:ring-orange-500 transition-all duration-300">
+                    <div 
+                        onClick={() => navigate('/myprofile/change-photo', { state: { user } })}
+                        className="relative h-40 w-40 rounded-full cursor-pointer group shadow-xl ring-4 ring-slate-800 hover:ring-orange-500 transition-all duration-300">
                         {user.profileImageUrl ? (
                             <img 
                                 src={user.profileImageUrl} 
