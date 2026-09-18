@@ -81,7 +81,6 @@ const LevelStatBar = ({ label, value, tooltipText }: { label: string; value: num
     return (
         <div className="flex flex-col items-center">
             <div className="flex items-center gap-1.5 relative group mb-8 justify-center">
-                
                 <div className="absolute bottom-full right-1/2 translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-600 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none normal-case not-italic font-normal tracking-normal text-center">
                     {tooltipText}
                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-600"></div>
@@ -108,8 +107,8 @@ const LevelStatBar = ({ label, value, tooltipText }: { label: string; value: num
                             className={`relative w-4 ${barHeights[index]} bg-slate-800 rounded-sm overflow-hidden border border-slate-700/50`}
                         >
                             <div 
-                                className="absolute bottom-0 left-0 w-full bg-orange-500 transition-all duration-500" 
-                                style={{ height: `${fillPercentage}%` }}
+                                className="absolute top-0 left-0 h-full bg-orange-500 transition-all duration-500" 
+                                style={{ width: `${fillPercentage}%` }}
                             />
                         </div>
                     );

@@ -3,6 +3,54 @@ import { useAuth } from "./AuthContext";
 import api from "./utils/api";
 import romaniaData from "./utils/romania.json";
 
+interface ReviewStats {
+    numberOfReviews: number;
+    avgLevel: number;
+}
+
+const LevelStatBar = ({ label, value, tooltipText }: { label: string; value: number; tooltipText: string }) => {
+    const barHeights = ["h-7", "h-9", "h-11"];
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1.5 relative group mb-8 justify-center">
+                <div className="absolute bottom-full right-1/2 translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 border border-slate-600 text-xs text-slate-300 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 pointer-events-none normal-case not-italic font-normal tracking-normal text-center">
+                    {tooltipText}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-slate-600"></div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[2px] border-4 border-transparent border-t-slate-900"></div>
+                </div>
+
+                <div className="cursor-help text-slate-400 hover:text-slate-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+
+                <span className="uppercase font-extrabold italic text-slate-200 tracking-wider text-sm whitespace-nowrap">
+                    {label} <span className="text-orange-500 ml-1 text-sm">{value.toFixed(1)}</span>
+                </span>
+            </div>
+            
+            <div className="flex gap-1.5 items-end justify-center h-7 w-full mt-5">
+                {[0, 1, 2].map((index) => {
+                    const fillPercentage = Math.min(Math.max(value - index, 0), 1) * 100;
+                    return (
+                        <div 
+                            key={index} 
+                            className={`relative w-4 ${barHeights[index]} bg-slate-800 rounded-sm overflow-hidden border border-slate-700/50`}
+                        >
+                            <div 
+                                className="absolute top-0 left-0 h-full bg-orange-500 transition-all duration-500" 
+                                style={{ width: `${fillPercentage}%` }}
+                            />
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 const AccountSettings = () => {
     const { isAuthenticated, token } = useAuth();
     const [activeTab, setActiveTab] = useState("Personal Information");
@@ -14,6 +62,8 @@ const AccountSettings = () => {
     const [success, setSuccess] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [rawUser, setRawUser] = useState<any>(null);
+    const [stats, setStats] = useState<ReviewStats | null>(null);
+    const [isEditingLevel, setIsEditingLevel] = useState(false);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -23,7 +73,10 @@ const AccountSettings = () => {
         birthDate: "",
         county: "",
         city: "",
-        phoneNumber: ""
+        phoneNumber: "",
+        handedness: "Right",
+        height: "",
+        playerLevel: 1
     });
 
    useEffect(() => {
@@ -42,11 +95,15 @@ const AccountSettings = () => {
 
                 if (extractedUserId) {
                     setUserId(extractedUserId);
-                    api.get(`User/${extractedUserId}`)
-                        .then((response) => {
-                            const user = response.data;
+                    Promise.all([
+                        api.get(`User/${extractedUserId}`),
+                        api.get(`Review/stats/${extractedUserId}`)
+                    ])
+                    .then(([userResponse, statsResponse]) => {
+                            const user = userResponse.data;
                             setRawUser(user); 
-                            
+                            setStats(statsResponse.data);
+
                             let formattedDate = "";
                             if (user.dateOfBirth) {
                                 const d = new Date(user.dateOfBirth);
@@ -61,7 +118,10 @@ const AccountSettings = () => {
                                 birthDate: formattedDate,
                                 county: user.county || "",
                                 city: user.city || "",
-                                phoneNumber: user.phoneNumber || ""
+                                phoneNumber: user.phoneNumber || "",
+                                handedness: user.handedness || "Right",
+                                height: user.height ? String(user.height) : "",
+                                playerLevel: user.playerLevel || 1
                             });
 
                             if (user.county && romaniaData[user.county as keyof typeof romaniaData]) {
@@ -80,8 +140,13 @@ const AccountSettings = () => {
         }
     }, [isAuthenticated, token]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        
+        setFormData({ 
+            ...formData, 
+            [name]: name === "playerLevel" ? Number(value) : value 
+        });
     };
 
     const handleCountyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +182,8 @@ const AccountSettings = () => {
                 ...rawUser, 
                 ...formData, 
                 dateOfBirth: isoDate, 
+                height: formData.height ? Number(formData.height) : null,
+                playerLevel: Number(formData.playerLevel),
                 phoneNumber: formData.phoneNumber === "" ? null : formData.phoneNumber,
             };
 
@@ -151,6 +218,17 @@ const AccountSettings = () => {
         "Player Settings",
         "Change Password"
     ];
+
+    const getRecommendedLevel = () => {
+        if (!stats || stats.numberOfReviews === 0) return formData.playerLevel; 
+        
+        const avg = stats.avgLevel;
+        const decimalPart = avg - Math.floor(avg);
+        
+        return decimalPart < 0.7 ? Math.floor(avg) : Math.floor(avg) + 1;
+    };
+
+    const recommendedLevel = getRecommendedLevel();
 
     if (isLoading) {
         return (
@@ -189,7 +267,7 @@ const AccountSettings = () => {
                         <div className="flex flex-col gap-8">
                             <div>
                                 <h2 className="text-3xl font-bold text-white mb-2">Personal Information</h2>
-                                <p className="text-slate-400">Update your profile here.</p>
+                                <p className="text-slate-400">Update your account details here.</p>
                             </div>
 
                             {error && (
@@ -319,7 +397,7 @@ const AccountSettings = () => {
                                 <button 
                                     onClick={handleSaveChanges} 
                                     disabled={isSaving}
-                                    className={`font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg ${
+                                    className={`font-bold py-3 px-8 rounded-xl transition-all duration-200 ${
                                         isSaving 
                                             ? "bg-orange-400 cursor-not-allowed opacity-70" 
                                             : "bg-orange-500 hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-95 text-white"
@@ -332,15 +410,161 @@ const AccountSettings = () => {
                     )}
 
                     {activeTab === "Player Settings" && (
-                        <div>
-                            <h2 className="text-2xl font-bold text-white mb-6">Player Settings</h2>
-                            <p className="text-slate-400">Form fields for height, handedness, level, etc. will go here.</p>
+                        <div className="flex flex-col gap-10">
+                            <div>
+                                <h2 className="text-3xl font-bold text-white mb-2">Player Settings</h2>
+                                <p className="text-slate-400">Update your player details here.</p>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-xl font-semibold">
+                                    {error}
+                                </div>
+                            )}
+                            {success && (
+                                <div className="bg-green-500/10 border border-green-500/50 text-green-500 px-4 py-3 rounded-xl font-semibold">
+                                    {success}
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-3">
+                                <h3 className="text-xl font-bold text-white">Handedness</h3>
+                                <div className="flex gap-4">
+                                    {['Left', 'Right', 'Ambidextrous'].map(hand => (
+                                        <button
+                                            key={hand}
+                                            type="button"
+                                            onClick={() => setFormData({...formData, handedness: hand})}
+                                            className={`flex-1 py-4 rounded-xl font-bold border-2 transition-all duration-200 ${
+                                                formData.handedness === hand
+                                                ? 'border-orange-500 bg-slate-800 text-white shadow-orange-500/10'
+                                                : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                                            }`}
+                                        >
+                                            {hand}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-3 max-w-[200px]">
+                                <h3 className="text-xl font-bold text-white">Height <span className="text-slate-400 text-sm font-normal ml-1">(cm)</span></h3>
+                                <input 
+                                    type="number" 
+                                    name="height" 
+                                    value={formData.height} 
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. 185"
+                                    className="bg-slate-800 border border-slate-700 text-white text-lg px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow" 
+                                />
+                            </div>
+
+                            <div className="flex justify-start">
+                                <button onClick={handleSaveChanges} disabled={isSaving} className={`font-bold py-3 px-8 rounded-xl transition-all duration-200 ${isSaving ? "bg-orange-400 cursor-not-allowed opacity-70" : "bg-orange-500 hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-95 text-white"}`}>
+                                    {isSaving ? "Saving..." : "Save Changes"}
+                                </button>
+                            </div>
+
+                            <div className="h-px w-full bg-slate-700/50 my-2"></div>
+
+                            <div className="flex flex-col gap-8">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">Player Level</h3>
+                                    <p className="text-slate-400 text-sm">See how your selected skill level compares with your reviews.</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                                    <div className="flex flex-col items-center bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
+                                        <p className="text-slate-300 font-medium mb-6 text-center h-12 flex items-center">Your current level is:</p>
+                                        <LevelStatBar 
+                                            label="Level" 
+                                            value={formData.playerLevel} 
+                                            tooltipText="Your currently selected skill level." 
+                                        />
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-center bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
+                                        <p className="text-slate-300 font-medium mb-6 text-center h-12 flex items-center">
+                                            The level we recommend you based on the reviews:
+                                        </p>
+                                        <LevelStatBar 
+                                            label="Rec. Level" 
+                                            value={recommendedLevel} 
+                                            tooltipText={
+                                                stats?.numberOfReviews && stats.numberOfReviews > 0 
+                                                    ? `Based on ${stats.numberOfReviews} reviews (Avg: ${stats.avgLevel.toFixed(1)})` 
+                                                    : "Not enough reviews yet."
+                                            } 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-center mt-2">
+                                    {!isEditingLevel ? (
+                                        <button 
+                                            onClick={() => setIsEditingLevel(true)}
+                                            className="text-orange-500 hover:text-orange-400 font-bold transition-colors underline underline-offset-4"
+                                        >
+                                            Change Level
+                                        </button>
+                                    ) : (
+                                        <div className="flex flex-col gap-4 w-full max-w-sm mt-4 p-6 bg-slate-800/30 rounded-2xl border border-slate-700/50 shadow-inner">
+                                            <div>
+                                                <label className="block text-slate-300 text-sm font-bold mb-2">
+                                                    Choose your player level
+                                                </label>
+                                                <div className="relative"> 
+                                                    <select 
+                                                        name="playerLevel" 
+                                                        value={formData.playerLevel} 
+                                                        onChange={handleInputChange} 
+                                                        className="w-full bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:border-orange-500 transition-colors appearance-none cursor-pointer"
+                                                    >
+                                                        <option value={1}>1 (Beginner)</option>
+                                                        <option value={2}>2 (Intermediate)</option>
+                                                        <option value={3}>3 (Veteran)</option>
+                                                    </select>
+                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-4 w-full">
+                                                <button 
+                                                    onClick={() => {
+                                                        setIsEditingLevel(false);
+                                                        if (rawUser) {
+                                                            setFormData(prev => ({ ...prev, playerLevel: rawUser.playerLevel || 1 }));
+                                                        }
+                                                    }}
+                                                    className="flex-1 font-bold py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white transition-all duration-200 shadow-lg active:scale-95"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                
+                                                <button 
+                                                    onClick={async () => {
+                                                        await handleSaveChanges();
+                                                        setIsEditingLevel(false); 
+                                                    }}
+                                                    disabled={isSaving}
+                                                    className={`flex-1 font-bold py-3 rounded-xl transition-all duration-200 ${isSaving ? "bg-orange-400 cursor-not-allowed opacity-70" : "bg-orange-500 hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-95 text-white"}`}
+                                                >
+                                                    {isSaving ? "Saving..." : "Save"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === "Change Password" && (
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-6">Change Password</h2>
+                            <h2 className="text-3xl font-bold text-white mb-2">Change Password</h2>
                             <p className="text-slate-400">Current password and new password inputs will go here.</p>
                         </div>
                     )}
