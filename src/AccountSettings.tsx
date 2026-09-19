@@ -55,15 +55,28 @@ const AccountSettings = () => {
     const { isAuthenticated, token } = useAuth();
     const [activeTab, setActiveTab] = useState("Personal Information");
     const [isLoading, setIsLoading] = useState(true);
+
     const [userId, setUserId] = useState<number | null>(null);
+    const [rawUser, setRawUser] = useState<any>(null);
     const [counties, setCounties] = useState<string[]>([]);
     const [availableCities, setAvailableCities] = useState<string[]>([]);
+
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [rawUser, setRawUser] = useState<any>(null);
+
     const [stats, setStats] = useState<ReviewStats | null>(null);
     const [isEditingLevel, setIsEditingLevel] = useState(false);
+
+    const [passwordData, setPasswordData] = useState({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+    });
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const [formData, setFormData] = useState({
         username: "",
@@ -210,6 +223,45 @@ const AccountSettings = () => {
             }
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handlePasswordChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+    };
+
+    const handleChangePasswordSubmit = async () => {
+        setError(null);
+        setSuccess(null);
+
+        if (!passwordData.oldPassword) return setError("Please enter your current password.");
+        if (!passwordData.newPassword) return setError("Please enter the new password.");
+        if (!passwordData.confirmPassword) return setError("Please confirm your new password.");
+
+        const digitCount = (passwordData.newPassword.match(/\d/g) || []).length;
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword);
+
+        if (passwordData.newPassword.length < 8) return setError("The password must be at least 8 characters long.");
+        if (digitCount < 2) return setError("The password must contain at least 2 digits.");
+        if (!hasSpecialChar) return setError("The password must contain at least one special character.");
+        if (passwordData.newPassword !== passwordData.confirmPassword) return setError("Passwords do not match.");
+
+        setIsChangingPassword(true);
+
+        try {
+            await api.post(`User/${userId}/change-password`, {
+                oldPassword: passwordData.oldPassword,
+                newPassword: passwordData.newPassword
+            });
+
+            setSuccess("Password updated successfully!");
+            setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err: any) {
+            console.error("Password change error:", err.response?.data || err);
+            setError(err.response?.data?.detail || err.response?.data || "Failed to change password. Please check your old password and try again.");
+        } finally {
+            setIsChangingPassword(false);
         }
     };
 
@@ -485,7 +537,7 @@ const AccountSettings = () => {
                                     
                                     <div className="flex flex-col items-center bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
                                         <p className="text-slate-300 font-medium mb-6 text-center h-12 flex items-center">
-                                            The level we recommend you based on the reviews:
+                                            The level we recommend to you based on the reviews:
                                         </p>
                                         <LevelStatBar 
                                             label="Rec. Level" 
@@ -563,9 +615,110 @@ const AccountSettings = () => {
                     )}
 
                     {activeTab === "Change Password" && (
-                        <div>
-                            <h2 className="text-3xl font-bold text-white mb-2">Change Password</h2>
-                            <p className="text-slate-400">Current password and new password inputs will go here.</p>
+                        <div className="flex flex-col gap-8 max-w-xl">
+                            <div>
+                                <h2 className="text-3xl font-bold text-white mb-2">Change Password</h2>
+                                <p className="text-slate-400">Keep your account secure by using a strong password.</p>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-xl font-semibold">
+                                    {error}
+                                </div>
+                            )}
+                            {success && (
+                                <div className="bg-green-500/10 border border-green-500/50 text-green-500 px-4 py-3 rounded-xl font-semibold">
+                                    {success}
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-6">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-slate-400 pl-1">Old Password</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showOldPassword ? "text" : "password"} 
+                                            name="oldPassword"
+                                            value={passwordData.oldPassword}
+                                            onChange={handlePasswordChangeInput}
+                                            className="w-full bg-slate-800 border border-slate-700 text-white text-lg px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow pr-12"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowOldPassword(!showOldPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            {showOldPassword ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            ) : (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0a10.05 10.05 0 015.342-1.748c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0l-3.29-3.29" /></svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p className="text-md text-slate-400">
+                                    The new password must contain at least <strong className="text-white">8 characters</strong>, including at least <strong className="text-white">2 digits</strong> and <strong className="text-white">one special character</strong>.
+                                </p>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-slate-400 pl-1">New Password</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showNewPassword ? "text" : "password"} 
+                                            name="newPassword"
+                                            value={passwordData.newPassword}
+                                            onChange={handlePasswordChangeInput}
+                                            className="w-full bg-slate-800 border border-slate-700 text-white text-lg px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow pr-12"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            {showNewPassword ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0a10.05 10.05 0 015.342-1.748c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0l-3.29-3.29" /></svg>
+                                            ) : (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-slate-400 pl-1">Confirm New Password</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showConfirmPassword ? "text" : "password"} 
+                                            name="confirmPassword"
+                                            value={passwordData.confirmPassword}
+                                            onChange={handlePasswordChangeInput}
+                                            className="w-full bg-slate-800 border border-slate-700 text-white text-lg px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-shadow pr-12"
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            {showConfirmPassword ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0a10.05 10.05 0 015.342-1.748c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0l-3.29-3.29" /></svg>
+                                            ) : (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex justify-start">
+                                <button 
+                                    onClick={handleChangePasswordSubmit} 
+                                    disabled={isChangingPassword} 
+                                    className={`font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg ${isChangingPassword ? "bg-orange-400 cursor-not-allowed opacity-70" : "bg-orange-500 hover:bg-orange-600 hover:shadow-orange-500/20 active:scale-95 text-white"}`}
+                                >
+                                    {isChangingPassword ? "Saving..." : "Save Password"}
+                                </button>
+                            </div>
                         </div>
                     )}
 
